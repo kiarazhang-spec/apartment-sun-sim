@@ -1,10 +1,48 @@
 import { useState } from 'react'
+import * as SunCalc from 'suncalc'
+
+function getSunAngle(windowDir, sunAzimuth){
+  let diff = Math.abs(windowDir - sunAzimuth)
+  if(diff > 180){
+    diff = 360 - diff
+  }
+  return diff
+}
+
+function getLightStatus(altitude, angle){
+  if (altitude <= 0){
+    return 'now is after sunset time, not direct sunlight'
+  }else if (angle < 45){
+    return 'now sun location is facing the window, strong direct sunlight'
+  }else if (angle < 90){
+    return 'sunlight with angle'
+  }else{
+    return 'sun is locating behind the building, not direct sunlight'
+  }
+}
 
 function App(){
   const[address, setAddress] = useState('')
   const [orientation, setOrientation] = useState('')
   const [submitted, setSubmitted] = useState(false)
+  const times = SunCalc.getTimes(new Date(), 37.7749, -122.4194)
+  const sunPos = SunCalc.getPosition(new Date(), 37.7749, -122.4194)
+  console.log('sunrise', times.sunrise)
+  console.log('sunset',times.sunset)
+  console.log('azimuth:', sunPos.azimuth)
+  console.log('altitude:', sunPos.altitude)
+  console.log('angletest', getSunAngle(180,165))
+  console.log('angletest', getSunAngle(10,350))
+  console.log('angletest', getSunAngle(0,180))
 
+  const angle = getSunAngle(180, sunPos.azimuth)
+  const status = getLightStatus(sunPos.altitude, angle)
+  console.log('sunlight test', status)
+  console.log('测A 太阳高、正对：', getLightStatus(45, 10))   // 应该：强烈直射
+  console.log('测B 太阳高、斜射：', getLightStatus(45, 70))   // 应该：斜射，有部分光进入
+  console.log('测C 太阳高、背面：', getLightStatus(45, 150))  // 应该：太阳在窗户背面
+  console.log('测D 太阳没出来：', getLightStatus(-5, 10))    // 应该：无直射光（守门生效）
+  
   return(
     <div>
       <h1>公寓日照模拟器</h1>
