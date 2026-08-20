@@ -21,6 +21,16 @@ function getLightStatus(altitude, angle){
   }
 }
 
+function orientationToDegrees(orientation){
+  const map = {
+    N: 0,
+    E: 90,
+    S: 180,
+    W: 270,
+  }
+  return map[orientation]
+}
+
 function App(){
   const[address, setAddress] = useState('')
   const [orientation, setOrientation] = useState('')
@@ -34,15 +44,11 @@ function App(){
   console.log('angletest', getSunAngle(180,165))
   console.log('angletest', getSunAngle(10,350))
   console.log('angletest', getSunAngle(0,180))
-
-  const angle = getSunAngle(180, sunPos.azimuth)
+  const windowDegrees = orientationToDegrees(orientation)
+  const angle = getSunAngle(windowDegrees, sunPos.azimuth)
   const status = getLightStatus(sunPos.altitude, angle)
   console.log('sunlight test', status)
-  console.log('测A 太阳高、正对：', getLightStatus(45, 10))   // 应该：强烈直射
-  console.log('测B 太阳高、斜射：', getLightStatus(45, 70))   // 应该：斜射，有部分光进入
-  console.log('测C 太阳高、背面：', getLightStatus(45, 150))  // 应该：太阳在窗户背面
-  console.log('测D 太阳没出来：', getLightStatus(-5, 10))    // 应该：无直射光（守门生效）
-  
+ 
   return(
     <div>
       <h1>公寓日照模拟器</h1>
@@ -61,12 +67,20 @@ function App(){
         <option value="S">Facing South S</option>
         <option value="W">Facing West W</option>
       </select>
-      <button onClick = {() => setSubmitted(true)}> check sun-sim </button>
+      
+      <button onClick = {() => {
+        if (orientation === ''){
+          alert('please select orientation')
+          return
+        }
+            setSubmitted(true)
+       }}> check sun-sim </button>
       
       {submitted && (
         <div>
           <p>your inputting address is : {address}</p>
           <p>your orientation selection is :{orientation}</p>
+          <p>sunlight: {status}</p>
         </div>
       )
     }
