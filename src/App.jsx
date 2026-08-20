@@ -31,6 +31,13 @@ function orientationToDegrees(orientation){
   return map[orientation]
 }
 
+async function getCoordinates(address) {
+  const url = `https://nominatim.openstreetmap.org/search?format=json&q=${address}`
+  const response = await fetch(url)
+  const data = await response.json()
+  return data
+}
+
 function App(){
   const[address, setAddress] = useState('')
   const [orientation, setOrientation] = useState('')
@@ -48,6 +55,8 @@ function App(){
   const angle = getSunAngle(windowDegrees, sunPos.azimuth)
   const status = getLightStatus(sunPos.altitude, angle)
   console.log('sunlight test', status)
+
+  getCoordinates('San Francisco').then((data) => console.log(data))
  
   return(
     <div>
