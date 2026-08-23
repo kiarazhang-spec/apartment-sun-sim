@@ -32,7 +32,7 @@ function orientationToDegrees(orientation){
 }
 
 async function getCoordinates(address) {
-  const url = `https://nominatim.openstreetmap.org/search?format=json&q=${address}`
+ const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=5&countrycodes=us`
   const response = await fetch(url)
   const data = await response.json()
   return data
@@ -42,22 +42,32 @@ function App(){
   const[address, setAddress] = useState('')
   const [orientation, setOrientation] = useState('')
   const [submitted, setSubmitted] = useState(false)
-  const times = SunCalc.getTimes(new Date(), 37.7749, -122.4194)
-  const sunPos = SunCalc.getPosition(new Date(), 37.7749, -122.4194)
-  console.log('sunrise', times.sunrise)
-  console.log('sunset',times.sunset)
-  console.log('azimuth:', sunPos.azimuth)
-  console.log('altitude:', sunPos.altitude)
-  console.log('angletest', getSunAngle(180,165))
-  console.log('angletest', getSunAngle(10,350))
-  console.log('angletest', getSunAngle(0,180))
-  const windowDegrees = orientationToDegrees(orientation)
-  const angle = getSunAngle(windowDegrees, sunPos.azimuth)
-  const status = getLightStatus(sunPos.altitude, angle)
-  console.log('sunlight test', status)
+  const[candidates,setCandidates] = useState([])
+  const[coords, setCoords] = useState(null)
 
-  getCoordinates('San Francisco').then((data) => console.log(data))
+   async function handleSearch() {
+    const data = await getCoordinates(address)
+    setCandidates(data)
+    console.log('candidates:', data)
+  }
+
+  function pickCandidate(c) {
+    setCoords({
+      lat: parseFloat(c.lat),
+      lng: parseFloat(c.lon),
+    })
+    console.log('picked coords:', c.lat, c.lon)
+  }
  
+  let status = null
+  if (coords) {
+    const sunPos = SunCalc.getPosition(new Date(), coords.lat, coords.lng)
+    console.log('real sunPos:', sunPos)
+    const windowDegrees = orientationToDegrees(orientation)
+    const angle = getSunAngle(windowDegrees, sunPos.azimuth)
+    status = getLightStatus(sunPos.altitude, angle)
+  }
+
   return(
     <div>
       <h1>公寓日照模拟器</h1>
@@ -67,6 +77,14 @@ function App(){
       value={address}
       onChange={(e) => setAddress(e.target.value)}/>
       
+      <button onClick={handleSearch}>search address</button>
+     
+     {candidates.map((c) => (
+         <button key={c.place_id} onClick={() => pickCandidate(c)}>
+          {c.display_name}
+        </button>
+      ))}
+
       <select 
       value={orientation} 
       onChange={(e) => setOrientation(e.target.value)}>
