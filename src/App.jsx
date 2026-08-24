@@ -96,6 +96,10 @@ function App(){
       </select>
       
       <button onClick = {() => {
+        if (!coords){
+          alert('please search and select an address first')
+          return
+        }
         if (orientation === ''){
           alert('please select orientation')
           return
